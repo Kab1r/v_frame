@@ -195,7 +195,9 @@ impl<T: Pixel> PlaneData<T> {
     }
 
     unsafe fn layout(len: usize) -> Layout {
-        Layout::from_size_align(len * mem::size_of::<T>(), 1 << Self::DATA_ALIGNMENT_LOG2)
+        const MIN_SIZE: usize = 1;
+        let size = (len * mem::size_of::<T>()).max(MIN_SIZE);
+        Layout::from_size_align(size, 1 << Self::DATA_ALIGNMENT_LOG2)
             .expect("layout size too large")
     }
 
@@ -1051,6 +1053,12 @@ pub mod test {
         println!("{:?}", &plane.data[..10]);
 
         assert_eq!(&output[..64], &plane.data[..64]);
+    }
+    #[test]
+    fn test_plane_zero_len() {
+        let plane = Plane::<u8>::new(0, 0, 0, 0, 0, 0);
+        assert_eq!(*plane.data, []);
+        assert_eq!(plane.data.len(), 0);
     }
 
     #[test]
